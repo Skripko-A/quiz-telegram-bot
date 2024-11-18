@@ -18,7 +18,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def start(update: Update, context: CallbackContext) -> None:
+def start_command(update: Update, context: CallbackContext) -> None:
     user = update.effective_user
     update.message.reply_markdown_v2(
         rf"H {user.mention_markdown_v2()}\!",
@@ -40,8 +40,8 @@ def main() -> None:
     updater = Updater(env.str("TG_BOT_TOKEN"))
     dispatcher = updater.dispatcher
 
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(CommandHandler("help", help))
+    dispatcher.add_handler(CommandHandler("start", start_command))
+    dispatcher.add_handler(CommandHandler("help", help_command))
 
     dispatcher.add_handler(
         MessageHandler(Filters.text & ~Filters.command, echo)
