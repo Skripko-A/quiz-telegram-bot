@@ -67,9 +67,6 @@ def handle_solution_attempt(
         update.message.reply_text("Правильно!")
         return start_command(update, context)
     elif update.message.text == "Сдаться":
-        user_id = update.effective_user.id
-        question = redis_db.get(user_id)
-        question = question.decode("utf-8")
         correct_answer = questions[question].lstrip("Ответ:\n")
         update.message.reply_text(f"Правильный ответ: {correct_answer}")
         return start_command(update, context)
