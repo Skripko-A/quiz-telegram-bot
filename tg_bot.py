@@ -1,12 +1,9 @@
 from enum import Enum
 from functools import partial
-import json
 import logging
-from pathlib import Path
 import random
 import traceback
 
-from environs import Env
 import redis
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (
@@ -18,8 +15,7 @@ from telegram.ext import (
     ConversationHandler,
 )
 
-
-from tg_logger import set_telegram_logger
+from settings import settings
 
 
 class State(Enum):
@@ -86,27 +82,10 @@ def cancel(update: Update, context: CallbackContext) -> int:
 
 
 def main() -> None:
-    env = Env()
-    env.read_env()
-    bot_token = env.str("TG_BOT_TOKEN")
-    admin_chat_id = env.str("TG_ADMIN_CHAT_ID")
-    logger = set_telegram_logger(
-        bot_token=bot_token, admin_chat_id=admin_chat_id
-    )
-    logging.basicConfig(
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        level=logging.INFO,
-    )
-    updater = Updater(env.str("TG_BOT_TOKEN"))
-    redis_db = redis.Redis(
-        host=env("REDIS_HOST"),
-        port=env.int("REDIS_PORT"),
-        password=env("REDIS_PASSWORD"),
-    )
-
-    with open(Path(env("QUESTIONS_JSON")), "r", encoding="utf-8") as json_file:
-        questions = json.load(json_file)
-
+    redis_db = redis.from_url(settings.redis_url)
+    logger = settings.setup_logging()
+    questions = settings.load_questions()
+    updater = Updater(settings.tg_bot_token)
     dispatcher = updater.dispatcher
 
     conversation_handler = ConversationHandler(

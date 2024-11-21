@@ -1,16 +1,13 @@
-import json
 import logging
-from pathlib import Path
 import random
 import traceback
 
-from environs import Env
 import redis
 import vk_api as vk
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api.longpoll import VkLongPoll, VkEventType
 
-from tg_logger import set_telegram_logger
+from settings import settings
 
 
 def make_keyboard(event, vk_api, keyboard):
@@ -64,37 +61,25 @@ def handle_solution_attempt(event, vk_api, questions, redis_db):
         print(correct_answer)
 
 
-if __name__ == "__main__":
-    env = Env()
-    env.read_env()
-
-    tg_bot_token = env.str("TG_BOT_TOKEN")
-    admin_chat_id = env.str("TG_ADMIN_CHAT_ID")
-    logger = set_telegram_logger(
-        bot_token=tg_bot_token, admin_chat_id=admin_chat_id
-    )
-    logging.basicConfig(
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        level=logging.INFO,
-    )
-    redis_db = redis.Redis(
-        host=env("REDIS_HOST"),
-        port=env.int("REDIS_PORT"),
-        password=env("REDIS_PASSWORD"),
-    )
-
-    with open(Path(env("QUESTIONS_JSON")), "r", encoding="utf-8") as json_file:
-        questions = json.load(json_file)
-
+def set_keyboard():
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button("Новый вопрос", color=VkKeyboardColor.POSITIVE)
     keyboard.add_button("Сдаться", color=VkKeyboardColor.NEGATIVE)
     keyboard.add_line()
     keyboard.add_button("Мой счёт", color=VkKeyboardColor.PRIMARY)
+    return keyboard
+
+
+def main():
+    redis_db = redis.from_url(settings.redis_url)
+    logger = settings.setup_logging()
+    questions = settings.load_questions()
+    keyboard = set_keyboard()
+
     vk_bot_start_log_message = "vk_bot started"
     while True:
         try:
-            vk_session = vk.VkApi(token=env.str("VK_TOKEN"))
+            vk_session = vk.VkApi(token=settings.vk_token)
             vk_api = vk_session.get_api()
             longpoll = VkLongPoll(vk_session)
             logging.info(vk_bot_start_log_message)
@@ -116,3 +101,7 @@ if __name__ == "__main__":
             )
         except Exception:
             logger.error(f"Бот упал с ошибкой: {traceback.format_exc()}")
+
+
+if __name__ == "__main__":
+    main()
