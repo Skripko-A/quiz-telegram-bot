@@ -6,6 +6,8 @@ from tg_logger import set_telegram_logger
 
 
 BASE_DIR = Path(__file__).resolve().parent
+print(str(BASE_DIR / "questions.json"))
+print(str(BASE_DIR / ".env"))
 
 
 class Settings(BaseSettings):
