@@ -6,9 +6,7 @@ from tg_logger import set_telegram_logger
 
 
 class Settings(BaseSettings):
-    questions_json: str = str(
-        Path(__file__).resolve().parent / "questions.json"
-    )
+    questions_json: str = f"{Path(__file__).resolve().parent}/questions.json"
     questions_json: str
 
     model_config = SettingsConfigDict(
