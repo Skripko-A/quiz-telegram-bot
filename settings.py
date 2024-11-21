@@ -11,7 +11,9 @@ class Settings(BaseSettings):
     questions_json: str
 
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="allow"
+        env_file=f"{Path(__file__).resolve().parent}/.env",
+        env_file_encoding="utf-8",
+        extra="allow",
     )
 
     def setup_logging(self):
