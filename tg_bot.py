@@ -4,6 +4,7 @@ import json
 import logging
 from pathlib import Path
 import random
+import traceback
 
 from environs import Env
 import redis
@@ -16,6 +17,9 @@ from telegram.ext import (
     CallbackContext,
     ConversationHandler,
 )
+
+
+from tg_logger import set_telegram_logger
 
 
 class State(Enum):
@@ -84,6 +88,15 @@ def cancel(update: Update, context: CallbackContext) -> int:
 def main() -> None:
     env = Env()
     env.read_env()
+    bot_token = env.str("TG_BOT_TOKEN")
+    admin_chat_id = env.str("TG_ADMIN_CHAT_ID")
+    logger = set_telegram_logger(
+        bot_token=bot_token, admin_chat_id=admin_chat_id
+    )
+    logging.basicConfig(
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        level=logging.INFO,
+    )
     updater = Updater(env.str("TG_BOT_TOKEN"))
     redis_db = redis.Redis(
         host=env("REDIS_HOST"),
@@ -127,8 +140,18 @@ def main() -> None:
 
     dispatcher.add_handler(conversation_handler)
 
-    updater.start_polling()
-    updater.idle()
+    bot_start_log_message = "tg_bot started"
+    logging.info(bot_start_log_message)
+    logger.info(bot_start_log_message)
+
+    while True:
+        try:
+            updater.start_polling()
+            updater.idle()
+        except ConnectionError as connection_error:
+            logging.error(f"Ошибка сети {connection_error}")
+        except Exception:
+            logger.error(f"Бот упал с ошибкой: {traceback.format_exc()}")
 
 
 if __name__ == "__main__":
