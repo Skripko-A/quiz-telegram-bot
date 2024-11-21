@@ -34,6 +34,7 @@ class Settings(BaseSettings):
 
     def load_questions(self):
         print(self.questions_json)
+        print(self.raw_questions_path)
         with open(self.questions_json, "r", encoding="utf-8") as json_file:
             return json.load(json_file)
 
