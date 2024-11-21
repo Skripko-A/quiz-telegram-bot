@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     tg_admin_chat_id: int
     questions_json: str = str(BASE_DIR / "questions.json")
     raw_questions_path: str = str(BASE_DIR / "questions")
-
+    print(questions_json)
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"),
         env_file_encoding="utf-8",
