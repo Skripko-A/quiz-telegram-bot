@@ -4,6 +4,8 @@ from pathlib import Path
 import chardet
 from environs import Env
 
+from settings import settings
+
 
 def open_questions(filename: str) -> str:
     with open(f"{filename}", "rb") as raw:
@@ -36,9 +38,7 @@ def create_questions_answers(files: list[str]) -> dict[str:str]:
 
 
 def main():
-    env = Env()
-    env.read_env()
-    directory_path = Path(env("RAW_QUESTIONS_PATH"))
+    directory_path = Path(settings.raw_questions_path)
     files = [file for file in directory_path.iterdir() if file.is_file()]
     questions_and_answers = create_questions_answers(files)
     with open("questions.json", "w", encoding="utf-8") as json_file:
