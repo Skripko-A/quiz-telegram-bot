@@ -1,7 +1,10 @@
 import json
 import logging
 from pathlib import Path
+from typing import Optional
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
 from tg_logger import set_telegram_logger
 
 
@@ -11,10 +14,10 @@ print(str(BASE_DIR / ".env"))
 
 
 class Settings(BaseSettings):
-    tg_bot_token: str
-    tg_admin_chat_id: int
-    questions_json: str
-    raw_questions_path: str
+    tg_bot_token: Optional[str] = None
+    tg_admin_chat_id: Optional[str] = None
+    questions_json: Optional[str] = None
+    raw_questions_path: Optional[str] = None
 
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"),
