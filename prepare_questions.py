@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 import chardet
-from environs import Env
 
 from settings import settings
 
