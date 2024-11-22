@@ -56,7 +56,6 @@ def handle_solution_attempt(
 ) -> int:
     user_id = update.effective_user.id
     question = redis_db.get(user_id)
-
     question = question.decode("utf-8")
     user_answer = update.message.text
     correct_answer = (
@@ -72,6 +71,7 @@ def handle_solution_attempt(
         return start_command(update, context)
     else:
         update.message.reply_text("Неправильно. Попробуйте ещё раз.")
+        start_command(update, context)
         print(correct_answer)
         return State.GUESS_ANSWER.value
 
