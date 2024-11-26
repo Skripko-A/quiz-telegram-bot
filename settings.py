@@ -1,83 +1,78 @@
 import json
 import logging
 from pathlib import Path
-import typing
-from typing import Optional
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from environs import Env
 
 from tg_logger import set_telegram_logger
 
 
-BASE_DIR = Path(__file__).resolve().parent
+def setup_settings() -> dict[str, str | int]:
+    """
+    Reads settings from a .env file in the same directory as this module and
+    returns them as a dictionary with the following keys and types:
+        - tg_bot_token: str (Telegram bot token)
+        - tg_admin_chat_id: int (Telegram chat ID for logs)
+        - vk_token: str (VK API token)
+        - redis_url: str (URL of the Redis database)
+        - questions_json: str (Path to the JSON file containing questions and answers)
+        - raw_questions_path: str (Path to the directory containing raw question files)
 
-print(str(BASE_DIR / ".env"))
+    The .env file should be in the following format:
+    TG_BOT_TOKEN=<token>
+    TG_ADMIN_CHAT_ID=<chat_id>
+    VK_TOKEN=<token>
+    REDIS_URL=<url>
+    """
+    base_dir = Path(__file__).resolve().parent
+    env = Env()
+    env.read_env(str(base_dir / ".env"))
+    return {
+        "tg_bot_token": env("TG_BOT_TOKEN"),
+        "tg_admin_chat_id": env.int("TG_ADMIN_CHAT_ID"),
+        "vk_token": env("VK_TOKEN"),
+        "redis_url": env("REDIS_URL"),
+        "questions_json": str(base_dir / "questions.json"),
+        "raw_questions_path": str(base_dir / "questions"),
+    }
 
 
-class Settings(BaseSettings):
-    tg_bot_token: Optional[str] = None
-    tg_admin_chat_id: Optional[str] = None
-    questions_json: Optional[str] = None
-    raw_questions_path: Optional[str] = None
+def setup_logging(settings: dict[str, str | int]) -> logging.Logger:
+    """
+    Configures and returns a logger instance for the application.
 
-    model_config = SettingsConfigDict(
-        env_file=str(BASE_DIR / ".env"),
-        env_file_encoding="utf-8",
-        extra="allow",
+    This function sets up logging to output messages in a standard format
+    with timestamps, logger names, and log levels. It integrates with a
+    Telegram logger to send log records to a specified chat.
+
+    Args:
+        settings (dict[str, str | int]): A dictionary containing configuration settings,
+                                         including Telegram bot token and admin chat ID.
+
+    Returns:
+        logging.Logger: A configured logger instance.
+    """
+    logger: logging.Logger = set_telegram_logger(
+        bot_token=settings["tg_bot_token"],
+        admin_chat_id=settings["tg_admin_chat_id"],
     )
-
-    def __init__(self, **kwargs: typing.Any) -> None:
-        """
-        Initializes settings from environment variables and sets default values
-        for `questions_json` and `raw_questions_path` properties.
-
-        Args:
-            **kwargs: Additional keyword arguments passed to the parent class
-                `BaseSettings` constructor.
-
-        Returns:
-            None
-        """
-        super().__init__(**kwargs)
-        self.questions_json = str(BASE_DIR / "questions.json")
-        self.raw_questions_path = str(BASE_DIR / "questions")
-
-    def setup_logging(self) -> logging.Logger:
-        """
-        Configures a logger instance to send log records to a Telegram chat.
-
-        This function sets up a logger instance to send log records to the specified Telegram
-        chat. The logger instance is configured with a format string that includes the timestamp,
-        logger name, log level, and log message.
-
-        Args:
-            None
-
-        Returns:
-            logging.Logger: A logger instance configured to send logs to the specified Telegram chat.
-        """
-        logger: logging.Logger = set_telegram_logger(
-            bot_token=self.tg_bot_token,
-            admin_chat_id=self.tg_admin_chat_id,
-        )
-        logging.basicConfig(
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            level=logging.INFO,
-        )
-        return logger
-
-    def load_questions(self) -> dict[str, str]:
-        """
-        Loads a dictionary of questions from a JSON file.
-
-        Args:
-            None
-
-        Returns:
-            dict[str, str]: A dictionary where each key is a question and its value is the corresponding answer.
-        """
-        with open(self.questions_json, "r", encoding="utf-8") as json_file:
-            return json.load(json_file)
+    logging.basicConfig(
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        level=logging.INFO,
+    )
+    return logger
 
 
-settings = Settings()
+def load_questions(settings: dict[str, str | int]) -> dict[str, str]:
+    """
+    Loads a dictionary of questions and answers from a JSON file.
+
+    Args:
+        settings (dict[str, str | int]): A dictionary containing configuration settings,
+                                         including the path to the JSON file with questions and answers.
+
+    Returns:
+        dict[str, str]: A dictionary with questions as keys and their corresponding answers as values.
+    """
+    with open(settings["questions_json"], "r", encoding="utf-8") as json_file:
+        return json.load(json_file)

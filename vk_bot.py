@@ -7,7 +7,7 @@ import vk_api as vk
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api.longpoll import VkLongPoll, VkEventType
 
-from settings import settings
+from settings import setup_settings, setup_logging, load_questions
 
 
 def make_keyboard(
@@ -148,15 +148,16 @@ def main() -> None:
         None
     """
 
-    redis_db: redis.Redis = redis.from_url(settings.redis_url)
-    logger: logging.Logger = settings.setup_logging()
-    questions: dict[str, str] = settings.load_questions()
+    settings = setup_settings()
+    redis_db: redis.Redis = redis.from_url(settings["redis_url"])
+    logger: logging.Logger = setup_logging(settings)
+    questions: dict[str, str] = load_questions(settings)
     keyboard: VkKeyboard = set_keyboard()
 
     vk_bot_start_log_message: str = "vk_bot started"
     while True:
         try:
-            vk_session: vk.VkApi = vk.VkApi(token=settings.vk_token)
+            vk_session: vk.VkApi = vk.VkApi(token=settings["vk_token"])
             vk_api: vk.vk_api.VkApiMethod = vk_session.get_api()
             longpoll: VkLongPoll = VkLongPoll(vk_session)
             logging.info(vk_bot_start_log_message)

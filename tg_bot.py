@@ -13,9 +13,10 @@ from telegram.ext import (
     Filters,
     CallbackContext,
     ConversationHandler,
+    Dispatcher,
 )
 
-from settings import settings
+from settings import setup_settings, setup_logging, load_questions
 
 
 class State(Enum):
@@ -145,10 +146,11 @@ def main() -> None:
         ConnectionError: If there is a network-related issue.
         Exception: For any other exception that occurs during bot operation.
     """
-    redis_db: redis.Redis = redis.from_url(settings.redis_url)
-    logger: logging.Logger = settings.setup_logging()
-    questions: dict[str, str] = settings.load_questions()
-    updater: Updater = Updater(settings.tg_bot_token)
+    settings = setup_settings()
+    redis_db: redis.Redis = redis.from_url(settings["redis_url"])
+    logger: logging.Logger = setup_logging(settings)
+    questions: dict[str, str] = load_questions(settings)
+    updater: Updater = Updater(settings["tg_bot_token"])
     dispatcher: Dispatcher = updater.dispatcher
     """
     Creates a ConversationHandler for managing the Telegram bot's interaction flow.
