@@ -163,15 +163,12 @@ def main() -> None:
             logging.info(vk_bot_start_log_message)
             logger.info(vk_bot_start_log_message)
             for event in longpoll.listen():
-                if event.type == VkEventType.MESSAGE_NEW and event.to_me:
-                    make_keyboard(event, vk_api, keyboard)
-                    if event.text != "Новый вопрос":
-                        handle_solution_attempt(
-                            event, vk_api, questions, redis_db
-                        )
-                    handle_new_question_request(
-                        event, vk_api, questions, redis_db
-                    )
+                if event.type != VkEventType.MESSAGE_NEW or not event.to_me:
+                    continue
+                make_keyboard(event, vk_api, keyboard)
+                if event.text != "Новый вопрос":
+                    handle_solution_attempt(event, vk_api, questions, redis_db)
+                handle_new_question_request(event, vk_api, questions, redis_db)
         except TimeoutError as timeout_error:
             logging.error(
                 f"Превышено время ожидания {timeout_error.with_traceback}"
